@@ -12,8 +12,13 @@ PoseLandmarkerResult = mp.tasks.vision.PoseLandmarkerResult
 VisionRunningMode = mp.tasks.vision.RunningMode
 
 
-# CSV SETUP #
-"""
+# CURRENT POSE CLASS (label) & CSV #
+classes = ['upright', 'forward-slouch', 'side-lean']
+current_class = classes[2]
+current_csv = f"data/{current_class}.csv"
+
+
+# CSV HEADER SETUP #
 num_points = 33
 data_header = ['class']
 
@@ -22,13 +27,10 @@ for val in range(1, num_points+1):
 
 data_header += ['neck_tilt', 'shoulder_tilt', 'mouth_tilt', 'eye_tilt']
 
-with open('dataset.csv', 'w', newline='') as f:
+with open(current_csv, 'w', newline='') as f:
     writer = csv.writer(f, delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL)
     writer.writerow(data_header)
-"""
 
-# CURRENT POSE CLASS (label) #
-class_name = 'upright'
 
 
 # FUNCTIONS #
@@ -57,8 +59,6 @@ def on_callback(result: PoseLandmarkerResult, output_image: mp.Image, timestamp_
                                                     pose_landmarks_proto, 
                                                     mp.solutions.pose.POSE_CONNECTIONS, 
                                                     mp.solutions.drawing_styles.get_default_pose_landmarks_style())
-
-
 
     # ADD ANNOTATED FRAME AND LANDMARKS LIST TO QUEUE #
 
@@ -171,7 +171,7 @@ with PoseLandmarker.create_from_options(options) as landmarker:
 
             # EXPORT LANDMARK DATA TO CSV ON KEY PRESS (q) #
             
-            row = [class_name]
+            row = [current_class]
             
             #Add raw landmark coords to row (1st person detected only)
             for landmark in pose_landmarks[0]:
@@ -182,7 +182,7 @@ with PoseLandmarker.create_from_options(options) as landmarker:
             row += [angles['neck_tilt'], angles['shoulder_tilt'], angles['mouth_tilt'], angles['eye_tilt']]
 
             #Write to csv file.
-            with open('dataset.csv', 'a', newline='') as f:
+            with open(current_csv, 'a', newline='') as f:
                 csv.writer(f).writerow(row)
 
         except (queue.Empty, IndexError):
