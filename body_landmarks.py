@@ -12,7 +12,7 @@ PoseLandmarkerResult = mp.tasks.vision.PoseLandmarkerResult
 VisionRunningMode = mp.tasks.vision.RunningMode
 
 
-# FUNCTIONS #
+# CALLBACK FUNCTION #
 def on_callback(result: PoseLandmarkerResult, output_image: mp.Image, timestamp_ms: int) -> None:
     """
     Annotates landmarks onto frame & queues annotated frame and list of landmarks.
@@ -42,7 +42,6 @@ def on_callback(result: PoseLandmarkerResult, output_image: mp.Image, timestamp_
 
 
     # ADD ANNOTATED FRAME AND LANDMARKS LIST TO QUEUE #
-
     # Replace old frame without blocking (returns immediately).
     try:
         frame_q.get_nowait()
@@ -50,6 +49,7 @@ def on_callback(result: PoseLandmarkerResult, output_image: mp.Image, timestamp_
         pass
 
     frame_q.put_nowait((annotated_frame, pose_landmarks_list))
+
 
 
 # SET UP QUEUE #
@@ -95,20 +95,18 @@ with PoseLandmarker.create_from_options(options) as landmarker:
         try:
             annotated_frame, pose_landmarks = frame_q.get_nowait()
 
-            # EXPORT LANDMARK DATA TO CSV ON KEY PRESS (q) #
+            try:
+
+                pose_class = model.predict(X)[0] #Predict class.
+                #pose_prob = model.predict_proba(X)[0] #Predict probability of particular class.
+
+                # ANNOTATE CLASS ONTO FRAME #
+                text_coords = (int(pose_landmarks[0][0].x * width), int(pose_landmarks[0][0].y * height))
+                cv2.putText(annotated_frame, pose_class, text_coords, cv2.FONT_HERSHEY_COMPLEX, 2, (0, 0, 255), 3)
             
-            row = []
-            for landmark in pose_landmarks[0]:
-                row += [landmark.x, landmark.y, landmark.z, landmark.visibility]
-            X = pd.DataFrame([row])
+            except:
+                pass
 
-            pose_class = model.predict(X)[0] #Predict class.
-            #pose_prob = model.predict_proba(X)[0] #Predict probability of particular class.
-
-            # ANNOTATE CLASS ONTO FRAME #
-            text_coords = (int(pose_landmarks[0][0].x * width), int(pose_landmarks[0][0].y * height))
-            cv2.putText(annotated_frame, pose_class, text_coords, cv2.FONT_HERSHEY_COMPLEX, 2, (0, 0, 255), 3)
-        
         #If queue is empty, display unannotated frame.
         except queue.Empty:
             annotated_frame = frame_rgb

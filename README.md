@@ -1,9 +1,7 @@
 # Pose-Estimation
-Pose estimation and posture quantifier.
+Pose estimation and posture classification.
 
 Purpose:
-Track overall posture (open vs. closed), slouching, leaning.
+Tracks overall posture: upright, slouching, leaning.
 
-
-NOTES:
 
