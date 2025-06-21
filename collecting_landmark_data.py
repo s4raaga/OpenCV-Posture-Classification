@@ -14,10 +14,10 @@ VisionRunningMode = mp.tasks.vision.RunningMode
 
 # CURRENT POSE CLASS (label) & CSV #
 classes = ['upright', 'forward-slouch', 'side-lean']
-current_class = classes[2]
+current_class = classes[0]
 current_csv = f"data/{current_class}.csv"
 
-
+"""
 # CSV HEADER SETUP #
 num_points = 33
 data_header = ['class']
@@ -30,7 +30,7 @@ data_header += ['neck_tilt', 'shoulder_tilt', 'mouth_tilt', 'eye_tilt']
 with open(current_csv, 'w', newline='') as f:
     writer = csv.writer(f, delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL)
     writer.writerow(data_header)
-
+"""
 
 
 # FUNCTIONS #
