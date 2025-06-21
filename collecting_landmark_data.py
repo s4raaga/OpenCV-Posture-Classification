@@ -11,23 +11,24 @@ PoseLandmarkerOptions = mp.tasks.vision.PoseLandmarkerOptions
 PoseLandmarkerResult = mp.tasks.vision.PoseLandmarkerResult
 VisionRunningMode = mp.tasks.vision.RunningMode
 
-"""
 
 # CSV SETUP #
+"""
 num_points = 33
 data_header = ['class']
 
 for val in range(1, num_points+1):
     data_header += ['x{}'.format(val), 'y{}'.format(val), 'z{}'.format(val), 'v{}'.format(val)]
 
+data_header += ['neck_tilt', 'shoulder_tilt', 'mouth_tilt', 'eye_tilt']
+
 with open('dataset.csv', 'w', newline='') as f:
     writer = csv.writer(f, delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL)
     writer.writerow(data_header)
-
 """
 
 # CURRENT POSE CLASS (label) #
-class_name = 'slouch'
+class_name = 'upright'
 
 
 # FUNCTIONS #
@@ -40,15 +41,12 @@ def on_callback(result: PoseLandmarkerResult, output_image: mp.Image, timestamp_
     pose_landmarks_list = result.pose_landmarks
 
     #Get frame dimensions.
-    h, w = annotated_frame.shape[:2]
+    global height, width
 
     # ANNOTATE LANDMARKS #
 
     #Iterate over detected poses and annotate
     for pose in pose_landmarks_list:
-        
-        #Get key points for analysis.
-        get_key_points(pose, h, w)
 
         #Convert plain python list into a NormalizedLandmarkList protobuf.
         pose_landmarks_proto = landmark_pb2.NormalizedLandmarkList()
@@ -74,7 +72,7 @@ def on_callback(result: PoseLandmarkerResult, output_image: mp.Image, timestamp_
 
 
 
-def get_key_points(pose, frame_height: int, frame_width: int) -> dict:
+def get_key_angles(pose, frame_height: int, frame_width: int) -> dict:
     """
     Returns a dict of angles between chosen landmarks.
     """
@@ -104,7 +102,7 @@ def get_key_points(pose, frame_height: int, frame_width: int) -> dict:
         'neck_tilt': neck_angle,
         'shoulder_tilt': shoulder_angle,
         'mouth_tilt': mouth_angle,
-        'eyes_tilt': eyes_angle
+        'eye_tilt': eyes_angle
     }
 
 
@@ -144,6 +142,9 @@ with PoseLandmarker.create_from_options(options) as landmarker:
     if not cap.isOpened():
         raise RuntimeError("ERROR: CAMERA NOT OPENED")
 
+    # GET CAPTURE DIMENSIONS #
+    width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+    height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
 
     # READING & DISPLAYING FRAMES #
     while True:
@@ -171,20 +172,22 @@ with PoseLandmarker.create_from_options(options) as landmarker:
             # EXPORT LANDMARK DATA TO CSV ON KEY PRESS (q) #
             
             row = [class_name]
-            try:
-                for landmark in pose_landmarks[0]:
-                    row += [landmark.x, landmark.y, landmark.z, landmark.visibility]
+            
+            #Add raw landmark coords to row (1st person detected only)
+            for landmark in pose_landmarks[0]:
+                row += [landmark.x, landmark.y, landmark.z, landmark.visibility]
 
-                with open('dataset.csv', 'a', newline='') as f:
-                    csv.writer(f).writerow(row) #Export only the first person's landmark data.
-            except:
-                pass
+            #Add angles to row.
+            angles = get_key_angles(pose_landmarks[0], width, height)
+            row += [angles['neck_tilt'], angles['shoulder_tilt'], angles['mouth_tilt'], angles['eye_tilt']]
 
-        except queue.Empty:
+            #Write to csv file.
+            with open('dataset.csv', 'a', newline='') as f:
+                csv.writer(f).writerow(row)
+
+        except (queue.Empty, IndexError):
             annotated_frame = frame_rgb
         
-
-
 
         # DISPLAY ANNOTATED FRAME WITH OPENCV #
         annotated_frame_bgr = cv2.cvtColor(annotated_frame, cv2.COLOR_RGB2BGR) #Convert back to bgr.
