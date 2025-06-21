@@ -145,35 +145,33 @@ with PoseLandmarker.create_from_options(options) as landmarker:
         landmarker.detect_async(mp_image, timestamp_ms)
 
 
-        # GET QUEUE ITEMS #
         try:
+            # GET QUEUE ITEMS #
             annotated_frame, pose_landmarks = frame_q.get_nowait()
-
-            try:
                 
-                # FORMAT LANDMARKS & ANGLES #
-                X = []
-    
-                #Add raw landmark coords to row (1st person detected only)
-                for landmark in pose_landmarks[0]:
-                    X += [landmark.x, landmark.y, landmark.z, landmark.visibility]
+            # FORMAT LANDMARKS & ANGLES #
+            X = []
 
-                #Add angles to row.
-                angles = get_key_angles(pose_landmarks[0], width, height)
-                X += [angles['neck_tilt'], angles['shoulder_tilt'], angles['mouth_tilt'], angles['eye_tilt']]
+            #Add raw landmark coords to row (1st person detected only)
+            for landmark in pose_landmarks[0]:
+                X += [landmark.x, landmark.y, landmark.z, landmark.visibility]
 
-                pose_class = model.predict(X)[0] #Predict class.
-                #pose_prob = model.predict_proba(X)[0] #Predict probability of particular class.
+            #Add angles to row.
+            angles = get_key_angles(pose_landmarks[0], width, height)
+            X += [angles['neck_tilt'], angles['shoulder_tilt'], angles['mouth_tilt'], angles['eye_tilt']]
 
-                # ANNOTATE CLASS ONTO FRAME #
-                text_coords = (int(pose_landmarks[0][0].x * width), int(pose_landmarks[0][0].y * height))
-                cv2.putText(annotated_frame, pose_class, text_coords, cv2.FONT_HERSHEY_COMPLEX, 2, (0, 0, 255), 3)
-            
-            except:
-                pass
+            #Predict class.
+            X = np.array(X).reshape(1, -1)
+            pose_class = model.predict(X)[0] 
+            #pose_prob = model.predict_proba(X)[0] #Predict probability of particular class.
+
+            # ANNOTATE CLASS ONTO FRAME #
+            text_coords = (int(pose_landmarks[0][0].x * width), int(pose_landmarks[0][0].y * height))
+            cv2.putText(annotated_frame, pose_class, text_coords, cv2.FONT_HERSHEY_COMPLEX, 2, (0, 0, 255), 3)
+
 
         #If queue is empty, display unannotated frame.
-        except queue.Empty:
+        except (queue.Empty, IndexError):
             annotated_frame = frame_rgb
         
 
