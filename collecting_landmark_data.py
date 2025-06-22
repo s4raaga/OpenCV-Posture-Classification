@@ -13,8 +13,8 @@ VisionRunningMode = mp.tasks.vision.RunningMode
 
 
 # CURRENT POSE CLASS (label) & CSV #
-classes = ['upright', 'forward-slouch', 'side-lean']
-current_class = classes[0]
+classes = ['upright', 'forward-slouch', 'side-lean', 'back-slouch']
+current_class = classes[3]
 current_csv = f"data/{current_class}.csv"
 
 """
