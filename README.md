@@ -1,7 +1,7 @@
 # Pose-Estimation
-Pose estimation and posture classification.
+Pose estimation with OpenCV and MediaPipe and posture classification.
 
 Purpose:
-Tracks overall posture: upright, slouching, leaning.
+Tracks overall posture: upright, slouching foward/back, side leaning.
 
 
