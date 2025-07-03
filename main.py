@@ -111,7 +111,7 @@ def calculate_angle(p1: tuple[int, int], midpoint: tuple[int, int], p2: tuple[in
 frame_q = queue.Queue(maxsize=2)
 
 # LANDMARKER OBJECT #
-model_path = '/Users/saraarsenio/Documents/GitHub/Pose-Estimation/pose_landmarker_lite.task'
+model_path = 'pose_landmarker_lite.task'
 options = PoseLandmarkerOptions(base_options=BaseOptions(model_path), running_mode = VisionRunningMode.LIVE_STREAM, result_callback=on_callback)
 
 with PoseLandmarker.create_from_options(options) as landmarker:
